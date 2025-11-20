@@ -11,7 +11,17 @@
   from = "/*"
   to = "/index.html"
   status = 200
+```
 
-[[functions]]
-  node_bundler = "esbuild"
-  external_node_modules = ["sharp"]
+**MUY IMPORTANTE:**
+- Sin espacios raros
+- Sin caracteres especiales
+- Exactamente como lo ves aquí
+
+---
+
+### Pas 3: Commit
+
+1. En **"Commit message"** escribe:
+```
+   Fix netlify.toml syntax error
