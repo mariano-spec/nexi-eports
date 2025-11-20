@@ -1,5 +1,3 @@
-import fetch from 'node-fetch'
-
 export const handler = async (event) => {
   if (event.httpMethod !== 'POST') {
     return {
@@ -23,7 +21,6 @@ export const handler = async (event) => {
       throw new Error('Claude API key not configured')
     }
 
-    // Cridar a Claude API
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
