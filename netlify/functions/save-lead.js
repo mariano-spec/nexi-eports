@@ -1,13 +1,3 @@
-import fetch from 'node-fetch'
-
-const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY
-const AIRTABLE_BASE_ID = process.env.AIRTABLE_BASE_ID
-const AIRTABLE_TABLE_NAME = process.env.AIRTABLE_TABLE_NAME
-
-if (!AIRTABLE_API_KEY || !AIRTABLE_BASE_ID || !AIRTABLE_TABLE_NAME) {
-  throw new Error('Airtable credentials not configured')
-}
-
 export const handler = async (event) => {
   if (event.httpMethod !== 'POST') {
     return {
@@ -19,26 +9,35 @@ export const handler = async (event) => {
   try {
     const { name, email, phone, address, packages, totalPrice, mobileLinesCount, conversationId } = JSON.parse(event.body)
 
-    if (!name || !phone) {
+    // Validar que al menos tenga nombre y teléfono
+    if (!phone) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: 'Missing required fields: name, phone' })
+        body: JSON.stringify({ error: 'Phone number required' })
       }
     }
 
-    const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${AIRTABLE_TABLE_NAME}`
+    const airtableToken = process.env.AIRTABLE_API_KEY
+    const baseId = process.env.AIRTABLE_BASE_ID
+    const tableName = process.env.AIRTABLE_TABLE_NAME
+
+    if (!airtableToken || !baseId || !tableName) {
+      throw new Error('Airtable credentials not configured')
+    }
+
+    const url = `https://api.airtable.com/v0/${baseId}/${tableName}`
 
     const response = await fetch(url, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${AIRTABLE_API_KEY}`,
+        'Authorization': `Bearer ${airtableToken}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
         records: [
           {
             fields: {
-              'Name': name,
+              'Name': name || 'Sin nombre',
               'Email': email || '',
               'Phone': phone,
               'Address': address || '',
@@ -57,7 +56,7 @@ export const handler = async (event) => {
     if (!response.ok) {
       const error = await response.text()
       console.error('Airtable error:', error)
-      throw new Error(`Airtable error: ${response.status}`)
+      throw new Error(`Airtable ${response.status}`)
     }
 
     const data = await response.json()
@@ -72,7 +71,7 @@ export const handler = async (event) => {
     }
 
   } catch (error) {
-    console.error('Error saving lead:', error)
+    console.error('Error saving lead:', error.message)
     return {
       statusCode: 500,
       body: JSON.stringify({
