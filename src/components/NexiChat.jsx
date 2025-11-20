@@ -105,18 +105,14 @@ const NexiChat = () => {
         content: userMessage
       })
 
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
+ const response = await fetch('/.netlify/functions/chat', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
-    'x-api-key': import.meta.env.VITE_CLAUDE_API_KEY,
-    'anthropic-version': '2023-06-01'
   },
   body: JSON.stringify({
-    model: 'claude-sonnet-4-20250514',
-    max_tokens: 1024,
-    system: NEXI_SYSTEM_PROMPT,
-    messages: conversationHistory
+    messages: conversationHistory,
+    systemPrompt: NEXI_SYSTEM_PROMPT
   })
 });
 
@@ -125,7 +121,7 @@ if (!response.ok) {
 }
 
 const data = await response.json()
-const assistantMessage = data.content[0].text
+const assistantMessage = data.response
 
       setMessages(prev => [...prev, { role: 'assistant', content: assistantMessage }])
 
