@@ -105,23 +105,27 @@ const NexiChat = () => {
         content: userMessage
       })
 
-      const response = await fetch('/.netlify/functions/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          messages: conversationHistory,
-          systemPrompt: NEXI_SYSTEM_PROMPT
-        })
-      })
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-api-key': import.meta.env.VITE_CLAUDE_API_KEY,
+    'anthropic-version': '2023-06-01'
+  },
+  body: JSON.stringify({
+    model: 'claude-sonnet-4-20250514',
+    max_tokens: 1024,
+    system: NEXI_SYSTEM_PROMPT,
+    messages: conversationHistory
+  })
+});
 
-      if (!response.ok) {
-        throw new Error('Error en la resposta de l\'API')
-      }
+if (!response.ok) {
+  throw new Error('Error en la resposta de l\'API')
+}
 
-      const data = await response.json()
-      const assistantMessage = data.response
+const data = await response.json()
+const assistantMessage = data.content[0].text
 
       setMessages(prev => [...prev, { role: 'assistant', content: assistantMessage }])
 
