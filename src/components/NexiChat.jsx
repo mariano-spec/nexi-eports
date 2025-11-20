@@ -92,13 +92,8 @@ RESTRICCIONS:
 
       setMessages(prev => [...prev, { role: 'assistant', content: assistantMessage }])
 
-      await fetch('/.netlify/functions/save-conversation', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: [...conversationHistory, { role: 'assistant', content: assistantMessage }]
-        })
-      }).catch(err => console.warn('Error guardant conversa:', err))
+      // TODO: Guardar a Supabase cuando esté arreglado
+// await fetch('/.netlify/functions/save-conversation', ...)
 
     } catch (error) {
       console.error('Error:', error)
