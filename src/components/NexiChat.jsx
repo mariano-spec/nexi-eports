@@ -123,10 +123,20 @@ if (!response.ok) {
 const data = await response.json()
 const assistantMessage = data.response
 
-      setMessages(prev => [...prev, { role: 'assistant', content: assistantMessage }])
+setMessages(prev => [...prev, { role: 'assistant', content: assistantMessage }])
 
-      // Guardar conversa a Supabase
-      if (conversationHistory.length % 5 === 0) {
+// Guardar conversa a Supabase SIEMPRE
+const updatedHistory = [...conversationHistory, { role: 'assistant', content: assistantMessage }]
+await fetch('/.netlify/functions/save-conversation', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    messages: updatedHistory,
+    visitorInfo: {
+      id: Math.random().toString(36).substr(2, 9)
+    }
+  })
+}).catch(err => console.warn('Error guardant conversa:', err))
         await fetch('/.netlify/functions/save-conversation', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
