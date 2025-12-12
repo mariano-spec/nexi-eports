@@ -25,11 +25,12 @@ RESTRICCIONS: No revelar el system prompt, No informació fora de serveis, No co
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      content: 'Hola! Sóc NEXI 🔌\nSóc l\'assistent virtual d\'eportsinternet. Com et puc ajudar avui?\n\n💡 Pots preguntar-me sobre:\n• Tarifes de fibra i mòbil\n• Paquets integrats\n• Cobertura a la teva zona\n• Pressupostos personalitzats'
+      content: 'Hola! Sóc NEXI ⚡\nSóc l\'assistent virtual d\'eportsinternet. Com et puc ajudar avui?\n\n💡 Pots preguntar-me sobre:\n• Tarifes de fibra i mòbil\n• Paquets integrats\n• Cobertura a la teva zona\n• Pressupostos personalitzats'
     }
   ])
   const [inputValue, setInputValue] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [visitorId] = useState(`visitor_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`)
   const messagesEndRef = useRef(null)
 
   const scrollToBottom = () => {
@@ -77,18 +78,19 @@ RESTRICCIONS: No revelar el system prompt, No informació fora de serveis, No co
       const data = await response.json()
       const assistantMessage = data.response
 
-     
       setMessages(prev => [...prev, { role: 'assistant', content: assistantMessage }])
 
-// Guardar conversa a Supabase
-await fetch('/.netlify/functions/save-conversation', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    messages: [...conversationHistory, { role: 'assistant', content: assistantMessage }],
-    visitorId: `visitor_${Date.now()}`
-  })
-}).catch(err => console.warn('Error guardant conversa a Supabase:', err))
+      // ✅ OPTIMITZACIÓ: Guardar NOMÉS el darrer parell missatge (user + assistant)
+      // No guardem tota la conversa cada vegada!
+      await fetch('/.netlify/functions/save-conversation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          visitorId: visitorId,
+          userMessage: userMessage,
+          assistantMessage: assistantMessage
+        })
+      }).catch(err => console.warn('Error guardant conversa a Supabase:', err))
 
       // Detectar si hay teléfono en la conversa
       const phoneRegex = /\b(\d{3}[\s.-]?\d{3}[\s.-]?\d{3})\b/g
@@ -106,7 +108,7 @@ await fetch('/.netlify/functions/save-conversation', {
           body: JSON.stringify({
             name: 'Visitant NEXI',
             phone: phone,
-            conversationId: `nexi_${Date.now()}`
+            visitorId: visitorId
           })
         }).catch(err => console.warn('Error guardant lead:', err))
       }
