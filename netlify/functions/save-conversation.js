@@ -18,32 +18,25 @@ export const handler = async (event) => {
   }
 
   try {
-    const { messages, visitorInfo } = JSON.parse(event.body)
+    const { visitorId, userMessage, assistantMessage } = JSON.parse(event.body)
 
-    if (!messages) {
+    if (!visitorId || !userMessage || !assistantMessage) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: 'Missing messages' })
+        body: JSON.stringify({ error: 'Missing required fields' })
       }
     }
 
-    // Generar ID de visitant si no existeix
-    const visitorId = visitorInfo?.id || `visitor_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-
-    // Guardar conversa
+    // ✅ OPTIMITZACIÓ: Insertar INDIVIDUAL messages, no una conversa géant
+    // Això és molt més eficient en termes de bandwidth i emmagatzematge
     const { data, error } = await supabase
-      .from('conversations')
+      .from('conversation_messages')
       .insert([
         {
           visitor_id: visitorId,
-          visitor_name: visitorInfo?.name || null,
-          visitor_email: visitorInfo?.email || null,
-          visitor_phone: visitorInfo?.phone || null,
-          visitor_address: visitorInfo?.address || null,
-          interested_packages: visitorInfo?.packages || [],
-          budget_total: visitorInfo?.budget || null,
-          messages: messages,
-          status: 'active'
+          user_message: userMessage,
+          assistant_message: assistantMessage,
+          timestamp: new Date().toISOString()
         }
       ])
       .select()
@@ -57,7 +50,7 @@ export const handler = async (event) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         success: true,
-        conversation_id: data[0].id
+        message_id: data[0].id
       })
     }
 
